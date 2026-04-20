@@ -66,3 +66,22 @@ class Post(db.Model):
         if new:
             db.session.add(self)
         db.session.commit()
+    
+    @property
+    def image_url(self):
+        if not self.image_path:
+            return None
+
+        # If container is private, generate SAS
+        sas_token = blob_service.generate_blob_shared_access_signature(
+            container_name=blob_container,
+            blob_name=self.image_path,
+            permission=BlobPermissions.READ,
+            expiry=datetime.utcnow() + timedelta(hours=1)
+        )
+
+        return blob_service.make_blob_url(
+            container_name=blob_container,
+            blob_name=self.image_path,
+            sas_token=sas_token
+        )
